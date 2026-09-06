@@ -64,6 +64,10 @@ fn connectAddress(address: std.net.Address, deadline: Deadline) !std.net.Stream 
         },
         else => return err,
     };
+    // HTTP/2 sends short control frames and may receive small DATA windows.
+    // Avoid the Nagle/delayed-ACK interaction between a frame header and body.
+    const enabled: c_int = 1;
+    try posix.setsockopt(fd, posix.IPPROTO.TCP, posix.TCP.NODELAY, std.mem.asBytes(&enabled));
     return stream;
 }
 
