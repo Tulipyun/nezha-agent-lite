@@ -1,0 +1,17 @@
+nezha-agent-lite
+An independent Zig implementation of the Nezha Agent v0.20.5 core wire protocol.
+
+Protocol reference:
+  https://github.com/nezhahq/agent
+  The frozen protocol schema is in protocol/nezha-v0.20.5.proto.
+
+HPACK static/Huffman tables follow RFC 7541 and were checked against the
+Go HTTP/2 HPACK implementation. The Go Authors' BSD license is retained in
+licenses/Go-BSD-3-Clause.txt.
+
+Distributed static executables include Zig standard-library/runtime and musl
+components. Their notices are retained in licenses/Zig-MIT.txt and
+licenses/musl-COPYRIGHT.txt.
+
+This project is not an official Nezha release and does not implement the
+complete Go agent feature set or the current upstream v2 protocol.

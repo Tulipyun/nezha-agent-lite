@@ -1,0 +1,51 @@
+name: Build and test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Install Zig 0.15.2
+        shell: bash
+        run: |
+          curl --fail --location --retry 3 \
+            https://ziglang.org/download/0.15.2/zig-x86_64-linux-0.15.2.tar.xz \
+            --output "$RUNNER_TEMP/zig.tar.xz"
+          printf '%s  %s\n' \
+            02aa270f183da276e5b5920b1dac44a63f1a49e55050ebde3aecc9eb82f93239 \
+            "$RUNNER_TEMP/zig.tar.xz" | sha256sum --check
+          tar -xf "$RUNNER_TEMP/zig.tar.xz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/zig-x86_64-linux-0.15.2" >> "$GITHUB_PATH"
+      - name: Unit tests
+        run: zig build test --summary all
+      - name: Local HTTP/2 integration
+        run: |
+          zig build probe
+          python3 -m pip install -r tests/requirements.txt
+          python3 tests/protocol_integration.py --output test-results/protocol-integration.json
+      - name: Build Linux executables
+        run: |
+          zig build -Dtarget=aarch64-linux-musl -Dcpu=cortex_a53 -Doptimize=ReleaseSmall --prefix zig-out/aarch64
+          zig build -Dtarget=x86_64-linux-musl -Doptimize=ReleaseSmall --prefix zig-out/x86_64
+      - name: Required runtime endpoint
+        shell: bash
+        run: |
+          zig-out/x86_64/bin/nezha-agent-lite --help
+          if zig-out/x86_64/bin/nezha-agent-lite --password test --once >missing-server.log 2>&1; then
+            exit 1
+          fi
+          grep MissingServer missing-server.log
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: linux-executables
+          path: |
+            zig-out/aarch64/bin/nezha-agent-lite
+            zig-out/x86_64/bin/nezha-agent-lite

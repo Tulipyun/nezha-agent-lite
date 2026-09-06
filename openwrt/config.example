@@ -1,0 +1,11 @@
+config agent 'main'
+	# Required: hostname:port or [IPv6]:port, and this node's client secret.
+	option server ''
+	option secret ''
+	option report_delay '1'
+	option workers '8'
+	option report_workers '2'
+	option queue_capacity '128'
+	option task_max_age '30'
+	option rpc_timeout '5'
+	option debug '0'
